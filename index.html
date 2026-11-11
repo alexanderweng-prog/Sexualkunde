@@ -262,6 +262,11 @@ input[type=range] { width: 100%; height: 36px; margin: 0; accent-color: var(--pr
 .cell.sp { width: 40px; height: 40px; background: var(--organ4); }
 .cell.zy { width: 84px; height: 84px; background: var(--pop-yellow); }
 
+.bk h3 { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); margin: 4px 0 6px; }
+.bkdet { margin-top: 12px; }
+.bkdet summary { cursor: pointer; font-weight: 800; font-size: var(--text-sm); }
+.bkta { width: 100%; margin: 8px 0; border: 3px solid var(--line); border-radius: 14px; padding: 10px; background: var(--surface); color: var(--text); font: 500 var(--text-xs)/1.4 var(--font-mono); word-break: break-all; }
+.okmsg { color: var(--good); font-weight: 700; margin-top: 8px; }
 /* Abbildungen */
 .yt { position: relative; aspect-ratio: 16 / 9; border: 3px solid var(--line); border-radius: 14px; overflow: hidden; background: #0f0b26; margin: var(--space-3) 0 0; }
 .yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
@@ -993,6 +998,7 @@ addCard('m2', 'Was Jungen gerade erleben', { h: 'Kurzfilm', only: 'other', body:
 addCard('w2', 'Was Östrogen bewirkt', { h: 'Video: Was passiert in der Pubertät?', body: () => vid('vTQPYzaohhA', 'Ein kurzes Erklärvideo von «logo!» (ZDF) zur Pubertät.') });
 addCard('w2', 'Gut zu wissen für dich', { h: 'Kurzfilme für dich', only: 'own', body: () => wwList(['periode', 'brust', 'bh', 'ausfluss', 'haare', 'pickel', 'schweiss'], 'Kurze Filme zu Fragen, die viele Mädchen haben.') });
 addCard('w2', 'Was Mädchen gerade erleben', { h: 'Kurzfilm', only: 'other', body: () => wwList(['periode'], 'Was passiert, wenn Mädchen ihre Tage bekommen? Ein kurzer Film dazu.') });
+MODS.w2.lesson = MODS.w2.lesson.filter(c => c.h !== 'Video' && c.h !== 'Video: Was passiert in der Pubertät?'); // nicht verfügbare Videos entfernt
 // Befruchtung
 pics('bef', 'Zwei ungleiche', [{ k: 'vergleich', cap: 'Spermium und Eizelle (Grössen nicht im gleichen Massstab).' }]);
 const befIdx = cardIdx('bef', 'Die Befruchtung');
@@ -1355,6 +1361,62 @@ function confetti(host) {
 }
 const footer = () => `<p class="small">Lern-App von ${AUTHOR} · Sekundarschule Halingen · Inhalte nach dem Dossier «Geschlechtsorgane, Geschlechtshormone und der weibliche Zyklus» (H. Hoffmeister, GFDL), überarbeitet und vereinfacht. Abbildungen aus dem Dossier: Hoffmeister/Ziegler (GFDL 1.2) bzw. Wikimedia Commons (gemeinfrei oder GFDL), Quelle jeweils beim Bild. Schemazeichnungen und Animationen: eigene Darstellung.</p>`;
 
+
+/* ---------- Lernstand sichern und laden ---------- */
+const SAVE_PREFIX = 'PZ1.';
+function crc(str) { let h = 0; for (let i = 0; i < str.length; i++) h = (Math.imul(h, 31) + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function exportCode() {
+  const json = JSON.stringify(Object.assign({}, state, { savedAt: new Date().toISOString() }));
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  return SAVE_PREFIX + b64 + '.' + crc(b64);
+}
+function importCode(code) {
+  code = String(code || '').replace(/\s+/g, '');
+  if (code.slice(0, 4) !== SAVE_PREFIX) throw new Error('Das ist kein Lernstand-Code dieser App.');
+  const rest = code.slice(4), dot = rest.lastIndexOf('.');
+  if (dot < 0) throw new Error('Der Code ist unvollständig.');
+  const b64 = rest.slice(0, dot);
+  if (crc(b64) !== rest.slice(dot + 1)) throw new Error('Der Code ist beschädigt oder unvollständig kopiert.');
+  let data;
+  try { data = JSON.parse(decodeURIComponent(escape(atob(b64)))); } catch (e) { throw new Error('Der Code lässt sich nicht lesen.'); }
+  if (!data || typeof data.xp !== 'number' || typeof data.stars !== 'object') throw new Error('Der Code enthält keinen gültigen Lernstand.');
+  return data;
+}
+function fileStamp() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function downloadBackup() {
+  const code = exportCode();
+  const txt = 'Lernstand «Pubertät & Zyklus» (Sekundarschule Halingen)\nGespeichert: ' + new Date().toLocaleString('de-CH') + '\nName: ' + state.nick + ' · ' + state.xp + ' XP\n\nLade diese Datei in der App unter «Lernstand sichern» wieder hoch.\n\n' + code + '\n';
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
+    a.download = 'lernstand-pubertaet-' + fileStamp() + '.txt';
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    ui.bkMsg = 'Datei gespeichert. Du findest sie in deinem Download-Ordner.'; ui.bkErr = '';
+  } catch (e) { ui.bkErr = 'Speichern als Datei geht hier nicht. Kopiere stattdessen den Code.'; }
+  render('keep');
+}
+function applyImport(code) {
+  try {
+    const data = importCode(code);
+    ui.bkPending = data; ui.bkErr = ''; ui.bkMsg = '';
+  } catch (e) { ui.bkErr = e.message; ui.bkPending = null; }
+  render('keep');
+}
+function backupCard(i) {
+  const p = ui.bkPending;
+  const confirm = p ? `<div class="merk warn"><span class="mk" aria-hidden="true">!</span><div><b>Lernstand gefunden:</b> ${esc(p.nick || '')}, ${p.xp} XP, ${Object.keys(p.stars || {}).length} Stationen geübt${p.savedAt ? ', gespeichert am ' + new Date(p.savedAt).toLocaleDateString('de-CH') : ''}.<br>Er ersetzt deinen jetzigen Stand (${state.xp} XP).
+    <div class="btnrow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sm btn-primary" data-act="bkapply">Ja, laden</button><button class="btn sm" data-act="bkcancel">Abbrechen</button></div></div></div>` : '';
+  return `<article class="card bk" style="--i:${i}"><div class="tag">Lernstand sichern</div><h3>Fortschritt speichern und mitnehmen</h3>
+    <p class="small">Dein Fortschritt liegt nur in diesem Browser. Sichere ihn, bevor du das Gerät wechselst oder der Browser gelöscht wird.</p>
+    <div class="btnrow" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn sm btn-primary" data-act="bkfile">Als Datei speichern</button><button class="btn sm" data-act="bkcopy">Code kopieren</button><button class="btn sm" data-act="bkload">Datei laden</button></div>
+    <input type="file" id="bkfile" accept=".txt,text/plain" hidden>
+    <details class="bkdet"${ui.bkOpen ? ' open' : ''}><summary>Code einfügen</summary>
+      <textarea id="bkcode" class="bkta" rows="3" placeholder="PZ1.…" spellcheck="false"></textarea>
+      <button class="btn sm" data-act="bkpaste">Code laden</button></details>
+    ${ui.bkMsg ? `<p class="small okmsg" role="status">${ui.bkMsg}</p>` : ''}${ui.bkErr ? `<p class="errtxt" role="alert">${esc(ui.bkErr)}</p>` : ''}${confirm}
+  </article>`;
+}
+
 /* ---------- Ansichten ---------- */
 const symW = '<svg class="sym" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="24" r="16" fill="none" stroke="currentColor" stroke-width="6"/><path d="M32 40v20M22 51h20" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></svg>';
 const symM = '<svg class="sym" viewBox="0 0 64 64" aria-hidden="true"><circle cx="26" cy="38" r="16" fill="none" stroke="currentColor" stroke-width="6"/><path d="M38 26L56 8M42 8h14v14" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1422,9 +1484,9 @@ function viewHome() {
     <div class="row"><h2>Dein Lernpfad</h2><button class="btn sm" data-act="gloss">${ui.gloss ? 'Begriffe zu' : 'Begriffe'}</button></div>
     <p class="small">Gewählt: <b>${SEXWORD[state.sex]}</b> · <button class="linkbtn" data-act="changesex">ändern</button></p>
     ${ui.gloss ? glossCard() : ''}
-    <div class="path" style="margin-top:12px">${intro}${cards}${rev}${chal}</div>
+    <div class="path" style="margin-top:12px">${intro}${cards}${rev}${chal}${backupCard(idx + 3)}</div>
     <footer class="foot">
-      <p class="small">Fortschritt und Auswahl werden nur auf diesem Gerät im Browser gespeichert${memoryOnly ? ' (hier gerade nicht möglich: der Fortschritt geht beim Schliessen verloren)' : ''}.</p>
+      <p class="small">Fortschritt und Auswahl werden nur auf diesem Gerät im Browser gespeichert. Mit «Lernstand sichern» nimmst du sie mit${memoryOnly ? ' (hier gerade nicht möglich: der Fortschritt geht beim Schliessen verloren)' : ''}.</p>
       <p class="small">Fragen, die du hier nicht stellen willst? Eltern, Lehrperson, Schulsozialarbeit oder Kinderarzt helfen weiter. Infos für Jugendliche: <span class="mono">feel-ok.ch</span>, <span class="mono">147.ch</span></p>
       <button class="btn sm" data-act="reset">${ui.confirmReset ? 'Sicher? Nochmals tippen zum Löschen' : 'Fortschritt zurücksetzen'}</button>
       ${footer()}
@@ -1590,9 +1652,27 @@ document.addEventListener('click', e => {
     const bub = $id('bubble'); if (bub) { bub.textContent = TIPS[tipI++ % TIPS.length]; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
     const z = document.querySelector('.hero .zelli'); if (z) { z.classList.remove('hop'); void z.offsetWidth; z.classList.add('hop'); }
   }
+  else if (a === 'bkfile') downloadBackup();
+  else if (a === 'bkcopy') {
+    const code = exportCode();
+    const ok = () => { ui.bkMsg = 'Code kopiert. Füge ihn zum Beispiel in eine Notiz oder E-Mail an dich selbst ein.'; ui.bkErr = ''; render('keep'); };
+    const fail = () => { ui.bkOpen = true; ui.bkMsg = ''; ui.bkErr = 'Kopieren geht hier nicht automatisch. Der Code steht jetzt im Feld unten: markieren und von Hand kopieren.'; render('keep'); const t = $id('bkcode'); if (t) { t.value = code; t.select(); } };
+    try { navigator.clipboard.writeText(code).then(ok, fail); } catch (err) { fail(); }
+  }
+  else if (a === 'bkload') { const f = $id('bkfile'); if (f) f.click(); }
+  else if (a === 'bkpaste') { const t = $id('bkcode'); ui.bkOpen = true; applyImport(t ? t.value : ''); }
+  else if (a === 'bkcancel') { ui.bkPending = null; ui.bkMsg = ''; render('keep'); }
+  else if (a === 'bkapply') { if (ui.bkPending) { const d = ui.bkPending; delete d.savedAt; state = Object.assign(defaults(), d); save(); ui.bkPending = null; ui.bkOpen = false; ui.bkMsg = 'Lernstand geladen.'; ui.bkErr = ''; render(); } }
   else if (a === 'reset') { if (ui.confirmReset) { state = defaults(); save(); ui.confirmReset = false; } else ui.confirmReset = true; render('keep'); }
 });
 document.addEventListener('input', e => { if (e.target && e.target.id === 'chcode') ui.chCode = e.target.value; });
+document.addEventListener('change', e => {
+  if (!e.target || e.target.id !== 'bkfile' || !e.target.files || !e.target.files[0]) return;
+  const r = new FileReader();
+  r.onload = () => { const m = /PZ1\.[A-Za-z0-9+/=]+\.[a-z0-9]+/.exec(String(r.result)); applyImport(m ? m[0] : ''); };
+  r.onerror = () => { ui.bkErr = 'Die Datei konnte nicht gelesen werden.'; render('keep'); };
+  r.readAsText(e.target.files[0]);
+});
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'chcode') { e.preventDefault(); const b = document.querySelector('[data-act="challenge"]'); if (b) b.click(); } });
 
 // Selbsttest: jede Aufgabenvorlage muss eine gültige Aufgabe liefern
