@@ -267,6 +267,20 @@ input[type=range] { width: 100%; height: 36px; margin: 0; accent-color: var(--pr
 .bkdet summary { cursor: pointer; font-weight: 800; font-size: var(--text-sm); }
 .bkta { width: 100%; margin: 8px 0; border: 3px solid var(--line); border-radius: 14px; padding: 10px; background: var(--surface); color: var(--text); font: 500 var(--text-xs)/1.4 var(--font-mono); word-break: break-all; }
 .okmsg { color: var(--good); font-weight: 700; margin-top: 8px; }
+.trocard h3 { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); margin: 4px 0 0; }
+.trogrid { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tro { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 8px 4px; border: 2px dashed var(--line-soft); border-radius: 12px; background: var(--subtle); min-width: 0; }
+.tro b { font-size: var(--text-xs); line-height: 1.2; color: var(--muted); overflow-wrap: break-word; hyphens: auto; max-width: 100%; }
+.tro span { font-size: 11px; line-height: 1.25; color: var(--muted); }
+.tro.got { border: 2px solid var(--line); background: var(--surface); }
+.tro.got b { color: var(--text); }
+.medal { width: 44px; height: 52px; }
+.medal.sm { width: 40px; height: 46px; flex: none; }
+.toast { position: fixed; left: 50%; bottom: 20px; z-index: 50; display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--pop-yellow); color: var(--ink); border: 3px solid var(--line); border-radius: 16px; box-shadow: 0 5px 0 var(--line); transform: translate(-50%, 160%); transition: transform .35s cubic-bezier(.3,.8,.3,1.2); max-width: calc(100% - 32px); min-width: 260px; }
+.toast.in { transform: translate(-50%, 0); }
+.toast .tag, .toast .small { color: var(--ink); }
+@media (min-width: 560px) { .trogrid { grid-template-columns: repeat(4, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none !important; } }
 /* Abbildungen */
 .yt { position: relative; aspect-ratio: 16 / 9; border: 3px solid var(--line); border-radius: 14px; overflow: hidden; background: #0f0b26; margin: var(--space-3) 0 0; }
 .yt iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
@@ -990,7 +1004,7 @@ const PS = 'https://www.planet-schule.de/schwerpunkt/du-bist-kein-werwolf/';
 const WW = { stimme: ['Der Stimmbruch', 'der-stimmbruch-film-100'], hoden: ['Die Hoden', 'die-hoden-film-100'], vorhaut: ['Die Vorhaut', 'die-vorhaut-film-100'], sperma: ['Sperma', 'sperma-film-100'],
   periode: ['Was passiert, wenn Mädchen ihre Tage bekommen?', 'die-periode-film-100'], brust: ['Wie verändert sich die Brust in der Pubertät?', 'wie-veraendert-sich-die-brust-in-der-pubertaet-film-100'], ausfluss: ['Ist Scheiden-Ausfluss normal?', 'ist-ausfluss-normal-film-100'], bh: ['Die richtige BH-Grösse', 'die-richtige-bh-groesse-film-100'],
   pickel: ['Wie entstehen Pickel in der Pubertät?', 'wie-entstehen-pickel-film-100'], schweiss: ['Warum schwitzen Jugendliche plötzlich mehr?', 'warum-schwitzen-jugendliche-ploetzlich-mehr-film-100'], haare: ['Warum wachsen mehr Haare am Körper?', 'warum-nimmt-die-koerperbehaarung-in-der-pubertaet-zu-film-100'] };
-const wwList = (keys, intro) => `<p>${intro}</p><div class="wwlist">${keys.map(k => `<a class="btn wwbtn" href="${PS}${WW[k][1]}.html" target="_blank" rel="noopener"><span class="ytplay sm" aria-hidden="true">▶</span><span>${WW[k][0]}</span></a>`).join('')}</div>
+const wwList = (keys, intro) => `<p>${intro}</p><div class="wwlist">${keys.map(k => `<a class="btn wwbtn" data-act="wwopen" href="${PS}${WW[k][1]}.html" target="_blank" rel="noopener"><span class="ytplay sm" aria-hidden="true">▶</span><span>${WW[k][0]}</span></a>`).join('')}</div>
   <p class="small" style="margin-top:10px">Kurzfilme aus der Reihe «Du bist kein Werwolf» (WDR, planet-schule.de). Sie öffnen sich in einem neuen Fenster und lassen sich nicht in die App einbetten.</p>`;
 addCard('m2', 'Was Testosteron bewirkt', { h: 'Video: Was in der Pubertät passiert', body: () => vid('_TdXjS1E_dQ', 'Ein kurzes Erklärvideo von «logo!» (ZDF) zur Pubertät.') });
 addCard('m2', 'Gut zu wissen für dich', { h: 'Kurzfilme für dich', only: 'own', body: () => wwList(['stimme', 'hoden', 'vorhaut', 'sperma', 'haare', 'pickel', 'schweiss'], 'Kurze Filme zu Fragen, die viele Jungen haben.') });
@@ -1256,10 +1270,79 @@ const KEY = 'halingen-pubertaet-lernapp-v1';
 const NICK_A = ['Flinke', 'Schlaue', 'Mutige', 'Coole', 'Wilde', 'Ruhige', 'Schnelle', 'Helle'];
 const NICK_B = ['Zelle', 'Amöbe', 'Mitose', 'Synapse', 'Hormon', 'Faser', 'Membran', 'Geissel'];
 const newNick = () => NICK_A[Math.floor(Math.random() * NICK_A.length)] + '-' + NICK_B[Math.floor(Math.random() * NICK_B.length)];
-function defaults() { return { sex: null, xp: 0, streak: 0, lastDay: null, stars: {}, items: {}, rounds: 0, lessons: {}, nick: newNick(), challenges: {}, introDone: false }; }
+function defaults() { return { sex: null, xp: 0, streak: 0, lastDay: null, stars: {}, items: {}, rounds: 0, lessons: {}, nick: newNick(), challenges: {}, introDone: false, trophies: {}, sims: {}, vids: 0, reviews: 0, pokes: 0, backedUp: false }; }
 let memoryOnly = false;
 function load() { try { const raw = window.localStorage.getItem(KEY); if (raw) return Object.assign(defaults(), JSON.parse(raw)); } catch (e) { /* kein Speicher */ } return defaults(); }
-function save() { try { window.localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { memoryOnly = true; } }
+function save() { if (state.sex) checkTrophies(); try { window.localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { memoryOnly = true; } }
+
+/* ---------- Trophäen ---------- */
+const g2 = (m, w, n) => state.sex === 'w' ? w : state.sex === 'm' ? m : n;
+const ALL_SIMS = () => [...new Set(Object.values(MODS).flatMap(m => m.lesson.map(c => c.sim).filter(Boolean)))];
+const starsOf = id => state.stars[id] || 0;
+const ownIds = () => state.sex === 'm' ? ['m1', 'm2', 'm3'] : ['w1', 'w2', 'w3'];
+const otherIds = () => state.sex === 'm' ? ['w1', 'w2', 'w3'] : ['m1', 'm2', 'm3'];
+// tier: 1 Bronze, 2 Silber, 3 Gold
+const TROPHIES = [
+  { id: 'lesson1', sym: '✎', tier: 1, name: () => 'Erste Schritte', desc: 'Schliesse deine erste Lektion ab.', ok: () => Object.keys(state.lessons).length >= 1 },
+  { id: 'lesson3', sym: '✎', tier: 2, name: () => 'Wissenshungrig', desc: 'Schliesse 3 Lektionen ab.', ok: () => Object.keys(state.lessons).length >= 3 },
+  { id: 'lessonAll', sym: '✎', tier: 3, name: () => 'Bücherwurm', desc: 'Schliesse alle 8 Lektionen ab.', ok: () => Object.keys(MODS).every(k => state.lessons[k]) },
+  { id: 'star1', sym: '★', tier: 1, name: () => 'Erster Stern', desc: 'Hol dir in einer Station mindestens einen Stern.', ok: () => Object.values(state.stars).some(v => v >= 1) },
+  { id: 'star3', sym: '★', tier: 2, name: () => 'Volltreffer', desc: 'Hol dir in einer Station 3 Sterne.', ok: () => Object.values(state.stars).some(v => v >= 3) },
+  { id: 'starAll', sym: '★', tier: 3, name: () => g2('Perfektionist', 'Perfektionistin', 'Perfektion'), desc: 'Hol dir in allen 8 Stationen 3 Sterne.', ok: () => Object.keys(MODS).every(k => starsOf(k) >= 3) },
+  { id: 'own', sym: '♥', tier: 2, name: () => state.sex === 'n' ? 'Mädchen-Wissen' : 'Ich kenne mich', desc: () => state.sex === 'n' ? 'Schliesse die 3 Stationen zum Körper von Mädchen ab.' : 'Schliesse die 3 Stationen zu deinem eigenen Körper ab.', ok: () => ownIds().every(k => starsOf(k) >= 1) },
+  { id: 'other', sym: '⇄', tier: 2, name: () => state.sex === 'n' ? 'Jungen-Wissen' : 'Blick über den Tellerrand', desc: () => state.sex === 'n' ? 'Schliesse die 3 Stationen zum Körper von Jungen ab.' : `Schliesse die 3 Stationen zum Körper von ${state.sex === 'm' ? 'Mädchen' : 'Jungen'} ab.`, ok: () => otherIds().every(k => starsOf(k) >= 1) },
+  { id: 'zyklus', sym: '◔', tier: 3, name: () => 'Zyklus-Profi', desc: 'Hol dir 3 Sterne in «Eizelle und Zyklus».', ok: () => starsOf('w3') >= 3 },
+  { id: 'befr', sym: '✦', tier: 3, name: () => 'Treffer!', desc: 'Hol dir 3 Sterne in «Befruchtung».', ok: () => starsOf('bef') >= 3 },
+  { id: 'sim5', sym: '⚗', tier: 1, name: () => 'Experimentierfreudig', desc: 'Probiere 5 verschiedene Simulationen oder Animationen aus.', ok: () => Object.keys(state.sims).length >= 5 },
+  { id: 'simAll', sym: '⚗', tier: 3, name: () => g2('Forscher', 'Forscherin', 'Forschergeist'), desc: () => `Probiere alle ${ALL_SIMS().length} Simulationen und Animationen aus.`, ok: () => ALL_SIMS().every(k => state.sims[k]) },
+  { id: 'video', sym: '▶', tier: 1, name: () => 'Kinoabend', desc: 'Schau dir ein Video oder einen Kurzfilm an.', ok: () => state.vids >= 1 },
+  { id: 'rounds10', sym: '⚑', tier: 2, name: () => 'Ausdauer', desc: 'Spiele 10 Übungsrunden.', ok: () => state.rounds >= 10 },
+  { id: 'review', sym: '↻', tier: 1, name: () => 'Auffrischen', desc: 'Spiele eine Auffrisch-Runde.', ok: () => state.reviews >= 1 },
+  { id: 'streak3', sym: '☀', tier: 1, name: () => 'Dranbleiben', desc: 'Lerne an 3 Tagen hintereinander (1 freier Tag erlaubt).', ok: () => state.streak >= 3 },
+  { id: 'streak7', sym: '☀', tier: 3, name: () => 'Eine Woche dabei', desc: 'Lerne an 7 Tagen hintereinander (1 freier Tag erlaubt).', ok: () => state.streak >= 7 },
+  { id: 'chal', sym: '⚔', tier: 1, name: () => 'Herausforderung', desc: 'Spiele eine Challenge.', ok: () => Object.keys(state.challenges).length >= 1 },
+  { id: 'chal6', sym: '⚔', tier: 3, name: () => 'Fehlerlos', desc: 'Löse eine Challenge mit 6 von 6.', ok: () => Object.values(state.challenges).some(c => c.c === 6) },
+  { id: 'xp500', sym: 'Σ', tier: 2, name: () => g2('Punktesammler', 'Punktesammlerin', 'Punkte sammeln'), desc: 'Sammle 500 XP.', ok: () => state.xp >= 500 },
+  { id: 'backup', sym: '↓', tier: 1, name: () => 'Auf Nummer sicher', desc: 'Sichere deinen Lernstand.', ok: () => state.backedUp },
+  { id: 'poke', sym: '☺', tier: 1, name: () => 'Zellis Freundschaft', desc: 'Stupse Zelli 10-mal an.', ok: () => state.pokes >= 10 }
+];
+const TROPHY_XP = { 1: 5, 2: 10, 3: 20 };
+const tDesc = t => typeof t.desc === 'function' ? t.desc() : t.desc;
+let toastQ = [];
+function checkTrophies() {
+  state.trophies = state.trophies || {};
+  let added = false;
+  TROPHIES.forEach(t => {
+    if (state.trophies[t.id]) return;
+    let ok = false; try { ok = t.ok(); } catch (e) { ok = false; }
+    if (ok) { state.trophies[t.id] = Date.now(); state.xp += TROPHY_XP[t.tier]; toastQ.push(t); added = true; }
+  });
+  if (added) setTimeout(showToasts, 350);
+}
+let toastBusy = false;
+function showToasts() {
+  if (toastBusy || !toastQ.length) return;
+  toastBusy = true;
+  const t = toastQ.shift();
+  const el = document.createElement('div');
+  el.className = 'toast'; el.setAttribute('role', 'status');
+  el.innerHTML = `${medal(t, true, 'sm')}<div><div class="tag">Neue Trophäe</div><b>${t.name()}</b><div class="small">+${TROPHY_XP[t.tier]} XP</div></div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
+  setTimeout(() => { el.classList.remove('in'); setTimeout(() => { el.remove(); toastBusy = false; showToasts(); }, 400); }, 3200);
+}
+function medal(t, got, cls) {
+  const col = got ? ['', '#cd7f32', '#b8c2cc', '#f5c518'][t.tier] : 'var(--line-soft)';
+  return `<svg class="medal ${cls || ''}" viewBox="0 0 48 56" aria-hidden="true"><path d="M14,2 L22,20 L18,22 L8,4 Z M34,2 L26,20 L30,22 L40,4 Z" fill="${got ? 'var(--primary)' : 'var(--line-soft)'}" stroke="var(--line)" stroke-width="1.5"/><circle cx="24" cy="34" r="17" fill="${col}" stroke="var(--line)" stroke-width="2.5"/><circle cx="24" cy="34" r="12.5" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/><text x="24" y="35" text-anchor="middle" dominant-baseline="central" style="font:800 15px var(--font-body);fill:${got ? '#161332' : 'var(--muted)'}">${got ? t.sym : '?'}</text></svg>`;
+}
+function trophyCard(i) {
+  const n = TROPHIES.filter(t => state.trophies[t.id]).length;
+  const tiles = TROPHIES.map(t => { const got = !!state.trophies[t.id]; return `<li class="tro${got ? ' got' : ''}">${medal(t, got)}<b>${got ? t.name() : '???'}</b><span>${tDesc(t)}</span></li>`; }).join('');
+  return `<article class="card trocard" id="trophies" style="--i:${i}"><div class="tag">Trophäen</div><h3>${n} von ${TROPHIES.length} gesammelt</h3>
+    <div class="xpbar light" role="progressbar" aria-valuemin="0" aria-valuemax="${TROPHIES.length}" aria-valuenow="${n}" aria-label="Gesammelte Trophäen"><div style="width:${Math.round(n / TROPHIES.length * 100)}%"></div></div>
+    <ul class="trogrid">${tiles}</ul><p class="small">Bronze +5 XP, Silber +10 XP, Gold +20 XP.</p></article>`;
+}
+
 let state = load();
 
 /* ---------- Spielregeln ---------- */
@@ -1337,7 +1420,7 @@ function finishRound() {
     ch = { code: R.code, c, t, prev, line: `${state.nick} · ${c} von 6 · ${t} s · Code ${R.code}` };
   }
   const gained = R.xp + bonus;
-  state.xp += gained; state.rounds += 1; touchStreak(); save();
+  state.xp += gained; state.rounds += 1; if (R.mode === 'review') state.reviews = (state.reviews || 0) + 1; touchStreak(); save();
   R.summary = { c, stars, bonus, gained, base: R.base, ch, levelUp: levelOf(state.xp) > lvBefore, missed: R.results.filter(r => !r.ok).map(r => r.topic) };
   ui.screen = 'summary'; render();
 }
@@ -1391,7 +1474,7 @@ function downloadBackup() {
     a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain;charset=utf-8' }));
     a.download = 'lernstand-pubertaet-' + fileStamp() + '.txt';
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    ui.bkMsg = 'Datei gespeichert. Du findest sie in deinem Download-Ordner.'; ui.bkErr = '';
+    ui.bkMsg = 'Datei gespeichert. Du findest sie in deinem Download-Ordner.'; ui.bkErr = ''; state.backedUp = true; save();
   } catch (e) { ui.bkErr = 'Speichern als Datei geht hier nicht. Kopiere stattdessen den Code.'; }
   render('keep');
 }
@@ -1482,9 +1565,9 @@ function viewHome() {
   </header>
   <main class="wrap">
     <div class="row"><h2>Dein Lernpfad</h2><button class="btn sm" data-act="gloss">${ui.gloss ? 'Begriffe zu' : 'Begriffe'}</button></div>
-    <p class="small">Gewählt: <b>${SEXWORD[state.sex]}</b> · <button class="linkbtn" data-act="changesex">ändern</button></p>
+    <p class="small">Gewählt: <b>${SEXWORD[state.sex]}</b> · <button class="linkbtn" data-act="changesex">ändern</button> · <a class="linkbtn" href="#trophies">Trophäen ${TROPHIES.filter(t => state.trophies[t.id]).length}/${TROPHIES.length}</a></p>
     ${ui.gloss ? glossCard() : ''}
-    <div class="path" style="margin-top:12px">${intro}${cards}${rev}${chal}${backupCard(idx + 3)}</div>
+    <div class="path" style="margin-top:12px">${intro}${cards}${rev}${trophyCard(idx + 2)}${chal}${backupCard(idx + 3)}</div>
     <footer class="foot">
       <p class="small">Fortschritt und Auswahl werden nur auf diesem Gerät im Browser gespeichert. Mit «Lernstand sichern» nimmst du sie mit${memoryOnly ? ' (hier gerade nicht möglich: der Fortschritt geht beim Schliessen verloren)' : ''}.</p>
       <p class="small">Fragen, die du hier nicht stellen willst? Eltern, Lehrperson, Schulsozialarbeit oder Kinderarzt helfen weiter. Infos für Jugendliche: <span class="mono">feel-ok.ch</span>, <span class="mono">147.ch</span></p>
@@ -1609,7 +1692,7 @@ function render(mode) {
   app.innerHTML = `<div class="view${cls}">${html}</div>`;
   document.querySelectorAll('[data-count]').forEach(el => { const to = +el.dataset.count, pre = el.dataset.prefix || '', suf = el.dataset.suffix || ''; if (ui.anim) countUp(el, to, pre, suf); else el.textContent = pre + to + suf; });
   if (ui.anim) document.querySelectorAll('[data-w]').forEach(el => nextFrame(() => { el.style.width = el.dataset.w + '%'; }));
-  if (scr === 'lesson') { const c = L.cards[L.i]; if (c.sim) { const host = $id('sim'); if (host && SIMS[c.sim]) SIMS[c.sim](host); } }
+  if (scr === 'lesson') { const c = L.cards[L.i]; if (c.sim) { const host = $id('sim'); if (host && SIMS[c.sim]) SIMS[c.sim](host); if (!state.sims[c.sim]) { state.sims[c.sim] = 1; save(); } } }
   if (scr === 'summary' && ui.anim && R && R.summary) { const s = R.summary; if ((R.mode === 'station' && s.stars === 3) || (R.mode === 'challenge' && s.c === 6) || s.levelUp) confetti(document.querySelector('.summary .card')); }
   if (mode === 'fb') { const el = document.querySelector('[data-act="next"]') || document.querySelector('.fb'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'end', behavior: 'smooth' }); return; }
   if (mode !== 'keep') window.scrollTo(0, 0);
@@ -1632,7 +1715,8 @@ document.addEventListener('click', e => {
   else if (a === 'ord') pickOrd(+b.dataset.i);
   else if (a === 'ordundo') { const q = R.queue[R.i]; q.picked.pop(); render('keep'); }
   else if (a === 'next') nextQ();
-  else if (a === 'yt') { const box = $id('yt-' + b.dataset.id); if (box) box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${b.dataset.id}?rel=0&autoplay=1" title="YouTube-Video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`; }
+  else if (a === 'yt' || a === 'wwopen') { state.vids = (state.vids || 0) + 1; save(); }
+  if (a === 'yt') { const box = $id('yt-' + b.dataset.id); if (box) box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${b.dataset.id}?rel=0&autoplay=1" title="YouTube-Video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`; }
   else if (a === 'explain') { const q = R.queue[R.i], m = modOf(q.tpl); startLesson(m.id, true); }
   else if (a === 'backround') { ui.screen = 'round'; render('keep'); window.scrollTo(0, 0); }
   else if (a === 'home') { ui.screen = 'home'; ui.gloss = false; render(); }
@@ -1649,13 +1733,14 @@ document.addEventListener('click', e => {
   else if (a === 'nick') { state.nick = newNick(); save(); render('keep'); }
   else if (a === 'copy') { const line = R && R.summary && R.summary.ch ? R.summary.ch.line : ''; const say = ok => { const el = $id('copymsg'); if (el) el.textContent = ok ? 'Kopiert.' : 'Markiere den Text und kopiere ihn von Hand.'; }; try { navigator.clipboard.writeText(line).then(() => say(true), () => say(false)); } catch (err) { say(false); } }
   else if (a === 'poke') {
+    state.pokes = (state.pokes || 0) + 1; save();
     const bub = $id('bubble'); if (bub) { bub.textContent = TIPS[tipI++ % TIPS.length]; bub.classList.remove('show'); void bub.offsetWidth; bub.classList.add('show'); }
     const z = document.querySelector('.hero .zelli'); if (z) { z.classList.remove('hop'); void z.offsetWidth; z.classList.add('hop'); }
   }
   else if (a === 'bkfile') downloadBackup();
   else if (a === 'bkcopy') {
     const code = exportCode();
-    const ok = () => { ui.bkMsg = 'Code kopiert. Füge ihn zum Beispiel in eine Notiz oder E-Mail an dich selbst ein.'; ui.bkErr = ''; render('keep'); };
+    const ok = () => { ui.bkMsg = 'Code kopiert. Füge ihn zum Beispiel in eine Notiz oder E-Mail an dich selbst ein.'; ui.bkErr = ''; state.backedUp = true; save(); render('keep'); };
     const fail = () => { ui.bkOpen = true; ui.bkMsg = ''; ui.bkErr = 'Kopieren geht hier nicht automatisch. Der Code steht jetzt im Feld unten: markieren und von Hand kopieren.'; render('keep'); const t = $id('bkcode'); if (t) { t.value = code; t.select(); } };
     try { navigator.clipboard.writeText(code).then(ok, fail); } catch (err) { fail(); }
   }
